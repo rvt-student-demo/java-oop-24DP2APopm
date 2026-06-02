@@ -5,18 +5,19 @@ import java.awt.*;
 import java.util.ArrayList;
 
 public class TodoGUI extends JFrame {
-    private ArrayList<String> tasks;
-    private DefaultListModel<String> listModel;
-    private JList<String> taskList;
+    private TodoDB database;
+    private DefaultListModel<TodoItem> listModel;
+    private JList<TodoItem> taskList;
     private JTextField taskField;
 
     public TodoGUI() {
-        this.tasks = new ArrayList<>();
+        this.database = new TodoDB();
 
         setTitle("To do list");
-        setSize(400, 300);
+        setSize(450, 350);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
+        setLocationRelativeTo(null);
 
         this.listModel = new DefaultListModel<>();
         this.taskList = new JList<>(listModel);
@@ -39,7 +40,19 @@ public class TodoGUI extends JFrame {
         addButton.addActionListener(event -> addTask());
         removeButton.addActionListener(event -> removeTask());
 
+        loadTasks();
+
         setVisible(true);
+    }
+
+    private void loadTasks() {
+        listModel.clear();
+
+        ArrayList<TodoItem> tasks = database.findAll();
+
+        for (TodoItem task : tasks) {
+            listModel.addElement(task);
+        }
     }
 
     private void addTask() {
@@ -50,20 +63,25 @@ public class TodoGUI extends JFrame {
             return;
         }
 
-        tasks.add(task);
-        listModel.addElement(task);
+        if (task.length() < 3) {
+            JOptionPane.showMessageDialog(this, "Task must be at least 3 characters long.");
+            return;
+        }
+
+        database.add(task);
         taskField.setText("");
+        loadTasks();
     }
 
     private void removeTask() {
-        int selectedIndex = taskList.getSelectedIndex();
+        TodoItem selectedTask = taskList.getSelectedValue();
 
-        if (selectedIndex == -1) {
+        if (selectedTask == null) {
             JOptionPane.showMessageDialog(this, "Select a task first.");
             return;
         }
 
-        tasks.remove(selectedIndex);
-        listModel.remove(selectedIndex);
+        database.removeById(selectedTask.getId());
+        loadTasks();
     }
 }
